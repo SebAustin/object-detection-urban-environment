@@ -1,0 +1,3 @@
+# One learning-rate schedule rule for every candidate, sized to the real step count
+
+The Model Zoo configs ship TPU recipes: large batches, around 300k cosine steps and a few thousand warm-up steps. With a short training budget (about 2,000 steps at batch 8), the shipped EfficientDet schedule never leaves warm-up. Every candidate therefore uses the same rule: `total_steps` equals the steps actually trained, warm-up is about 10% of them, and the base learning rate is scaled down for batch 8. We chose this over keeping each zoo default so that the comparison measures the models, not how each one copes with a mismatched schedule.

@@ -1,0 +1,3 @@
+# Use num_classes: 4 for a 3-class problem
+
+The dataset's label map uses ids 1 (vehicle), 2 (pedestrian) and 4 (cyclist), but the starter `pipeline.config` sets `num_classes: 3`. The TF OD API one-hot encodes class ids with depth `num_classes`, so cyclist (id 4) falls outside that range and is likely treated as background. We set `num_classes: 4` in every candidate's config and leave id 3 as an unused slot. The alternative was to rewrite the TFRecords and the label map with contiguous ids, which costs more and diverges from the public dataset that Udacity provides. Do not "fix" this back to 3: cyclists would silently stop being learned.
