@@ -115,10 +115,17 @@ To force a rebuild, delete that file.
 """),
         _code("""
 %%bash
-# Get the TF2 Object Detection API once, then copy its training and export scripts next to run_training.sh
-if [ ! -d docker/models/research/object_detection ]; then
-    git clone --depth 1 https://github.com/tensorflow/models.git docker/models
+# Get the TF2 Object Detection API at the PINNED commit (docs/adr/0003): newer upstream code uses
+# Python 3.9+ syntax that the tensorflow:2.13.0-gpu image (Python 3.8) cannot import.
+COMMIT=$(cat docker/TF_MODELS_COMMIT)
+if [ "$(git -C docker/models rev-parse HEAD 2>/dev/null)" != "${COMMIT}" ]; then
+    rm -rf docker/models && mkdir -p docker/models
+    git -C docker/models init -q
+    git -C docker/models remote add origin https://github.com/tensorflow/models.git
+    git -C docker/models fetch -q --depth 1 origin "${COMMIT}"
+    git -C docker/models checkout -q FETCH_HEAD
 fi
+echo "tensorflow/models at $(git -C docker/models rev-parse --short HEAD)"
 cp docker/models/research/object_detection/exporter_main_v2.py source_dir
 cp docker/models/research/object_detection/model_main_tf2.py source_dir
 """),

@@ -1,6 +1,7 @@
 """The committed training notebooks must match the generator (sources only; outputs may differ)."""
 
 import ast
+import re
 import json
 import sys
 
@@ -47,3 +48,24 @@ def test_python_cells_are_valid_syntax(key):
 
 def test_original_single_model_notebook_was_replaced():
     assert not (REPO_ROOT / "1_model_training" / "1_train_model.ipynb").exists()
+
+
+# ---------- tensorflow/models pin (docs/adr/0003) ----------
+
+PIN_FILE = REPO_ROOT / "1_model_training" / "docker" / "TF_MODELS_COMMIT"
+
+
+def test_tf_models_commit_is_pinned_to_a_full_sha():
+    assert re.fullmatch(r"[0-9a-f]{40}", PIN_FILE.read_text().strip())
+
+
+@pytest.mark.parametrize("key", KEYS)
+def test_notebook_checks_out_the_pinned_commit(key):
+    code = "\n".join(src for kind, src in sources(gen.build_notebook(key, key)) if kind == "code")
+    assert "docker/TF_MODELS_COMMIT" in code
+    assert "git clone --depth 1 https://github.com/tensorflow/models.git" not in code, "unpinned clone"
+
+
+def test_vendored_protos_come_from_the_pinned_commit():
+    readme = (REPO_ROOT / "tools" / "od_protos" / "README.md").read_text()
+    assert PIN_FILE.read_text().strip()[:7] in readme

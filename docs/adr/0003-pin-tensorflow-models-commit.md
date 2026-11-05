@@ -1,0 +1,3 @@
+# Pin tensorflow/models to the last commit that runs on Python 3.8
+
+The training image is `tensorflow/tensorflow:2.13.0-gpu` (Python 3.8), and the Object Detection API code is copied into it from a clone of `tensorflow/models`. Upstream commit `fb25c87` (2026-10-30) added Python 3.9+ annotations to `object_detection/core/preprocessor.py`, so a clone of `master` fails on import (`TypeError: 'type' object is not subscriptable`) before training starts; our first Run failed this way. We pin the clone to its parent, `feec308` (`1_model_training/docker/TF_MODELS_COMMIT`), instead of moving to a newer TF base image, which would also change the TF Serving version gap and the CUDA stack mid-project. Do not unpin unless the base image moves to Python 3.9+.
