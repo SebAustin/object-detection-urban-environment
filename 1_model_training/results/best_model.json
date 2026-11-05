@@ -1,0 +1,5 @@
+{
+  "candidate": "ssd_resnet50_v1_fpn_640",
+  "model_artifact": "s3://sagemaker-us-east-1-403723872191/tf2-od-ssd-resnet50-v1-fpn-640/tf2-od-ssd-resnet50-v1-fpn-640-2026-11-05-16-59-55-464/output/model.tar.gz",
+  "mAP": 0.09432751685380936
+}

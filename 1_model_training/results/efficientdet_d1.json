@@ -1,0 +1,11 @@
+{
+  "job_name": "tf2-od-efficientdet-d1-2026-11-05-16-09-26-497",
+  "status": "Completed",
+  "model_artifact": "s3://sagemaker-us-east-1-403723872191/tf2-od-efficientdet-d1/tf2-od-efficientdet-d1-2026-11-05-16-09-26-497/output/model.tar.gz",
+  "billable_seconds": 1916,
+  "training_seconds": 1916,
+  "candidate": "efficientdet_d1",
+  "num_train_steps": 2000,
+  "instance_type": "ml.g5.xlarge",
+  "tensorboard_s3_prefix": "s3://sagemaker-us-east-1-403723872191/logs/efficientdet_d1/"
+}
