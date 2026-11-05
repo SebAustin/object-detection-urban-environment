@@ -22,8 +22,17 @@ INSTANCE_NAME=${2:?"Usage: sagemaker_pipeline.sh s3://bucket/prefix <notebook-in
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 GATE_POLL_SECONDS=60
 GATE_TIMEOUT_SECONDS=$((3 * 3600))
-PY_ENV=/home/ec2-user/anaconda3/envs/python3
 KERNEL_NAME=project_py3
+
+# The conda env behind the "conda_python3" kernel; its location differs between platform versions.
+PY_ENV=""
+for candidate in /home/ec2-user/anaconda3/envs/python3 /home/ec2-user/miniconda3/envs/python3 /opt/conda/envs/python3; do
+    if [ -x "${candidate}/bin/python" ]; then PY_ENV=${candidate}; break; fi
+done
+if [ -z "${PY_ENV}" ]; then
+    found=$(find /home/ec2-user /opt -maxdepth 5 -path '*envs/python3/bin/python' 2>/dev/null | head -1)
+    [ -n "${found}" ] && PY_ENV=$(dirname "$(dirname "${found}")")
+fi
 
 cd "${REPO_DIR}" || exit 1
 LOG="${REPO_DIR}/pipeline.log"
@@ -80,7 +89,13 @@ wait_for_gate() {
 }
 
 status "SETUP"
+if [ -z "${PY_ENV}" ]; then
+    status "FAILED: no conda python3 environment found"
+    exit 1
+fi
+echo "Using Python env ${PY_ENV}"
 "${PY_ENV}/bin/python" --version
+docker --version
 "${PY_ENV}/bin/pip" install -q nbconvert nbclient ipykernel
 "${PY_ENV}/bin/python" -m ipykernel install --user --name "${KERNEL_NAME}" --display-name "conda_python3 (pipeline)"
 
