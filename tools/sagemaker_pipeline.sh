@@ -5,7 +5,7 @@
 # Each notebook is executed in place by tools/run_notebook.sh, so it keeps every output.
 #
 # Started by the notebook instance's lifecycle configuration (as ec2-user, under nohup):
-#   tools/sagemaker_pipeline.sh s3://<bucket>/project-runs/<run-id> <notebook-instance-name>
+#   tools/sagemaker_pipeline.sh s3://<bucket>/project-runs/<run-id> <notebook-instance-name> [all|deploy-only]
 #
 # Progress and artifacts go to that S3 prefix:
 #   status.txt        current stage (or DONE / FAILED: ...)
@@ -19,6 +19,10 @@ set -uo pipefail
 
 S3_PREFIX=${1:?"Usage: sagemaker_pipeline.sh s3://bucket/prefix <notebook-instance-name>"}
 INSTANCE_NAME=${2:?"Usage: sagemaker_pipeline.sh s3://bucket/prefix <notebook-instance-name>"}
+# "all" (default) runs every stage; "deploy-only" re-runs just the deploy notebook, reusing the
+# executed training/summary notebooks and results/ already on this instance.
+MODE=${3:-all}
+case "${MODE}" in all|deploy-only) ;; *) echo "Unknown mode '${MODE}' (use all or deploy-only)" >&2; exit 2 ;; esac
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 GATE_POLL_SECONDS=60
 GATE_TIMEOUT_SECONDS=$((3 * 3600))
@@ -99,10 +103,12 @@ docker --version
 "${PY_ENV}/bin/pip" install -q nbconvert nbclient ipykernel
 "${PY_ENV}/bin/python" -m ipykernel install --user --name "${KERNEL_NAME}" --display-name "conda_python3 (pipeline)"
 
-run 1_model_training/1_train_model_efficientdet_d1.ipynb
-wait_for_gate
-run 1_model_training/1_train_model_ssd_mobilenet_v2_fpnlite_640.ipynb
-run 1_model_training/1_train_model_ssd_resnet50_v1_fpn_640.ipynb
-run 1_model_training/3_experiment_summary.ipynb
+if [ "${MODE}" = "all" ]; then
+    run 1_model_training/1_train_model_efficientdet_d1.ipynb
+    wait_for_gate
+    run 1_model_training/1_train_model_ssd_mobilenet_v2_fpnlite_640.ipynb
+    run 1_model_training/1_train_model_ssd_resnet50_v1_fpn_640.ipynb
+    run 1_model_training/3_experiment_summary.ipynb
+fi
 run 2_run_inference/2_deploy_model.ipynb
 status "DONE"
