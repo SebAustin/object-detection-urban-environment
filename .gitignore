@@ -136,3 +136,5 @@ __pycache__/
 .pytest_cache/
 1_model_training/build/
 1_model_training/docker/models/
+pipeline.log
+run-*.log
