@@ -35,7 +35,14 @@ Each candidate's config is in `1_model_training/configs/<candidate>/pipeline.con
    * `ml.g5.xlarge` for training job usage
    * `ml.g4dn.xlarge` for endpoint usage
    Clone **this** repository, not the Udacity one.
-2. Run `1_train_model_efficientdet_d1.ipynb` from top to bottom. Restart the kernel after the install cell. This builds and pushes the Docker image once, which takes about 10 to 20 minutes.
+   **The submission must show executed cells.** Run each notebook with `tools/run_notebook.sh` from a Jupyter terminal (**File > New > Terminal**, then `cd SageMaker/<repo>`).
+   It executes the notebook in a fresh kernel and saves every output into the `.ipynb`. Because it runs under `nohup`, a closed tab or an expired lab session doesn't stop it:
+   ```bash
+   nohup tools/run_notebook.sh 1_model_training/1_train_model_efficientdet_d1.ipynb > run-1.log 2>&1 &
+   tail -f run-1.log
+   ```
+   If you run a notebook in the Jupyter UI instead, save it (Ctrl+S) after the last cell finishes, or its outputs are lost.
+2. Run `1_train_model_efficientdet_d1.ipynb` (with the command above). It builds and pushes the Docker image once, which takes about 10 to 20 minutes, then trains.
 3. Check the first Run before you spend more:
    * its loss should go down without any NaN;
    * note how long training took, from `results/efficientdet_d1.json`.
@@ -43,7 +50,18 @@ Each candidate's config is in `1_model_training/configs/<candidate>/pipeline.con
 4. Run the two SSD notebooks, one after the other: only one training job at a time, because of the concurrency limit.
 5. Run `3_experiment_summary.ipynb`. It writes `results/summary.csv` and `results/best_model.json`. Then fill in the write-up.
 6. Run `2_deploy_model.ipynb`, download `output.avi`, then **run the last cell, which deletes the endpoint**, and check under Inference > Endpoints that it is gone.
-7. Commit the executed notebooks and `results/`. Then **stop** the notebook instance, and delete it once your work is backed up.
+   If the deploy notebook fails partway through, `tools/run_notebook.sh` deletes the endpoint for you. Still, check the console.
+7. Commit the executed notebooks, `results/` and `2_run_inference/output.avi`. Then **stop** the notebook instance, and delete it once your work is backed up.
+
+### Before you submit
+
+Check each of these first; the review rejects notebooks without outputs.
+
+- [ ] All three `1_train_model_<candidate>.ipynb` show outputs in every code cell, including the training log and the final COCO metrics
+- [ ] `3_experiment_summary.ipynb` shows the comparison table and the graphs, and its write-up has real numbers (no `[ ]` left)
+- [ ] `2_deploy_model.ipynb` shows outputs through the video cell **and** the delete-endpoint cell
+- [ ] `2_run_inference/output.avi` is included
+- [ ] The endpoint no longer appears under Inference > Endpoints, and the notebook instance is stopped
 
 ### Local checks
 
