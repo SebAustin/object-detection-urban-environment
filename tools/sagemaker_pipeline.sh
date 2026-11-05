@@ -28,6 +28,22 @@ GATE_POLL_SECONDS=60
 GATE_TIMEOUT_SECONDS=$((3 * 3600))
 KERNEL_NAME=project_py3
 
+# Pin the region for every aws/boto3 call, including the self-stop in finish(). A notebook instance
+# started by a lifecycle script does not always have one configured, and without it both the
+# SageMaker SDK and the self-stop fail. Fallback order: env, aws config, instance metadata, us-east-1.
+imds_region() {
+    local token
+    token=$(curl -s -m 2 -X PUT http://169.254.169.254/latest/api/token \
+        -H "X-aws-ec2-metadata-token-ttl-seconds: 60") || return 0
+    curl -s -m 2 -H "X-aws-ec2-metadata-token: ${token}" \
+        http://169.254.169.254/latest/meta-data/placement/region || true
+}
+REGION=${AWS_DEFAULT_REGION:-${AWS_REGION:-}}
+[ -n "${REGION}" ] || REGION=$(aws configure get region 2>/dev/null || true)
+[ -n "${REGION}" ] || REGION=$(imds_region)
+[ -n "${REGION}" ] || REGION=us-east-1
+export AWS_DEFAULT_REGION=${REGION} AWS_REGION=${REGION}
+
 # The conda env behind the "conda_python3" kernel; its location differs between platform versions.
 PY_ENV=""
 for candidate in /home/ec2-user/anaconda3/envs/python3 /home/ec2-user/miniconda3/envs/python3 /opt/conda/envs/python3; do
@@ -97,7 +113,7 @@ if [ -z "${PY_ENV}" ]; then
     status "FAILED: no conda python3 environment found"
     exit 1
 fi
-echo "Using Python env ${PY_ENV}"
+echo "Using Python env ${PY_ENV}, region ${AWS_DEFAULT_REGION}"
 "${PY_ENV}/bin/python" --version
 docker --version
 "${PY_ENV}/bin/pip" install -q nbconvert nbclient ipykernel
